@@ -1,12 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import { Map, InfoWindow, useMapsLibrary, useMap, MapMouseEvent } from '@vis.gl/react-google-maps';
-
-interface MapProps {
-    places?: Array<{ name: string }>,
-}
+import { useEffect, useRef, useState, useContext } from 'react';
+import { Map, InfoWindow, Marker, useMapsLibrary, useMap, MapMouseEvent } from '@vis.gl/react-google-maps';
+import PlacesContext, { Place } from '../../PlacesContext';
 
 interface GeocodeResponse {
-    results: Array<{formatted_address: string}>
+    results: Array<{formatted_address: string, place_id: string}>
 }
 
 interface InfoWindow {
@@ -14,17 +11,21 @@ interface InfoWindow {
     content: React.ReactElement|string,
 }
 
-const MapView = ({ places }: MapProps) => {
+const MapView = () => {
     const [currLocation, setCurrLocation] = useState<google.maps.LatLngLiteral|undefined>({
         lat: 0.00,
         lng: 0.00,
     });
-    const [clickedLocation, setClickedLocation] = useState<google.maps.LatLngLiteral|undefined|null>();
+    const [clickedLocation, setClickedLocation] = useState<MapMouseEvent|undefined|null>();
     const [infoWindow, setInfoWindow] = useState<InfoWindow>();
+    const { places, addPlace } = useContext(PlacesContext);
 
     const map = useMap();
     const geocodeLib = useMapsLibrary("geocoding");
     const geocoder = useRef<google.maps.Geocoder>();
+
+    const placesLib = useMapsLibrary("places");
+    const placesRef = useRef<google.maps.places.PlacesService>();
 
     /**
      * Request for user's current position
@@ -54,19 +55,70 @@ const MapView = ({ places }: MapProps) => {
         geocoder.current = new geocodeLib.Geocoder();
     }, [geocodeLib, map]);
 
+    // Handle for Geocoder library import
+    useEffect((): void => {
+        if (!placesLib || !map) return;
+        placesRef.current = new placesLib.PlacesService(map);
+    }, [placesLib, map]);
+
     // Handler for click events on the map
     useEffect((): void => {
         if (clickedLocation) {
             // Reverse geocode the clicked coordinates
             geocoder.current
-                ?.geocode({ location: clickedLocation })
+                ?.geocode({ location: clickedLocation?.detail?.latLng })
                 ?.then((res: GeocodeResponse) => {
                     if (res?.results?.[0]) {
-                        // Display an info window with details on the selected coordinates
-                        setInfoWindow({
-                            header: res?.results?.[0]?.formatted_address,
-                            content: `${clickedLocation?.lat}, ${clickedLocation?.lng}`
-                        });
+                        console.log("Clicked location:", clickedLocation);
+
+                        const coordinates = clickedLocation?.detail?.latLng;
+                        const address = res?.results?.[0]?.formatted_address;
+                        const id = res?.results?.[0]?.place_id;
+            
+                        // If a Place ID does not exist for clicked coordinates, show a custom info window
+                        if (!clickedLocation?.detail?.placeId) {
+                            // Display an info window with details on the selected coordinates
+                            setInfoWindow({
+                                header: res?.results?.[0]?.formatted_address,
+                                content: `${coordinates?.lat}, ${coordinates?.lng}`
+                            });
+                        }
+
+                        // Check if place already exists, and if so, don't duplicate the place
+                        if (places && places.findIndex((place) => place?.id === id) > -1) return;
+
+                        // Get the name of the place by placeid, if a place ID exists
+                        if (!!clickedLocation?.detail?.placeId) {
+                            placesRef.current?.getDetails({
+                                placeId: clickedLocation?.detail?.placeId,
+                                fields: ["name"]
+                            }, (place, status) => {
+                                if (
+                                    status === google.maps.places.PlacesServiceStatus.OK &&
+                                    place &&
+                                    place?.name
+                                ) {
+                                    console.log("Place details:", place);
+                                    // Add the place with a name, if a name is returned
+                                    if (addPlace) {
+                                        addPlace({
+                                            name: place?.name,
+                                            id,
+                                            address,
+                                            coordinates
+                                        });
+                                        return;
+                                    }
+                                }
+                            });
+                        // If no name exists, add the place without
+                        } else {
+                            if (addPlace) addPlace({
+                                id, 
+                                address,
+                                coordinates: coordinates,
+                            }) 
+                        }
                     }
                 })
                 ?.catch((error) => {
@@ -77,14 +129,17 @@ const MapView = ({ places }: MapProps) => {
 
     return (
         <Map defaultZoom={5} defaultCenter={currLocation} onClick={(event: MapMouseEvent) => {
-            // If a Place ID exists for the clicked location, keep default behavior
-            if (event?.detail?.placeId) return;
-
+            console.log("Clicked location:", event);
             // Otherwise, show a custom info window with the formatted address and coordinates
-            setClickedLocation(event?.detail?.latLng);
+            setClickedLocation(event);
         }}>
-            {!!clickedLocation && !!infoWindow && (
-                <InfoWindow position={clickedLocation} headerContent={infoWindow?.header}>
+            {places?.map((place: Place) => (
+                <Marker position={place?.coordinates} />
+            ))}
+            {!!infoWindow && (
+                <InfoWindow position={clickedLocation?.detail?.latLng} headerContent={infoWindow?.header} onCloseClick={() => {
+                    setInfoWindow(undefined);
+                }}>
                     {infoWindow?.content}
                 </InfoWindow>
             )}
