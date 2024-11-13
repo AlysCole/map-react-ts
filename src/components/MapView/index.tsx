@@ -7,7 +7,7 @@ interface GeocodeResponse {
 }
 
 interface InfoWindow {
-    header: string,
+    header?: string,
     content: React.ReactElement|string,
 }
 
@@ -32,12 +32,14 @@ const MapView = () => {
      */
     const getUserLocation = (): void => {
         navigator.geolocation.getCurrentPosition((position) => {
-            setCurrLocation({
+            const pos = {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude
-            });
+            };
+            setCurrLocation(pos);
+
+            if (map) map.setCenter(pos);
         }, (error) => {
-            // Handle error here
             console.error("[getCurrentPosition] An error occurred while trying to request for the user's current position:", error);
         });
     }
@@ -80,7 +82,7 @@ const MapView = () => {
                             // Display an info window with details on the selected coordinates
                             setInfoWindow({
                                 header: res?.results?.[0]?.formatted_address,
-                                content: `${coordinates?.lat}, ${coordinates?.lng}`
+                                content: `${coordinates?.lat}, ${coordinates?.lng}`,
                             });
                         }
 
