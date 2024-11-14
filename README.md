@@ -1,50 +1,31 @@
-# React + TypeScript + Vite
+# map-react-ts
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is a working example of Google Maps in a React app.
 
-Currently, two official plugins are available:
+## Features
+ - Responsive
+ - Basic map interaction (pan, zoom, and place selection)
+ - Add/remove places by clicking on the map
+ - Collapsible sidebar with places list
+ - Places list virtualization
+ - Center on current location (based on browser permission)
+ - Map clustering
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## Expanding the ESLint configuration
+## Development Server
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+1. Request for environment variables, and place these in the .env file.
 
-- Configure the top-level `parserOptions` property like this:
+2. Install any dependencies.
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+3. Run the development server
+
+```sh
+touch .env
+npm install
+npm run dev
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Notes
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+ - The `MemoMarker` component is a separated `<AdvancedMarker` component from the map because, otherwise, the `ref` function was causing infinite re-renders.
