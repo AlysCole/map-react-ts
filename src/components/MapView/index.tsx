@@ -158,7 +158,7 @@ const MapView = () => {
 
     return (
         <Map
-            mapId="e9553ff684d37422"
+            mapId={import.meta.env.VITE_GOOGLE_MAP_ID}
             defaultZoom={10}
             defaultCenter={{
                 lat: 0.00,
