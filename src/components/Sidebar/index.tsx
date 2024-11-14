@@ -6,7 +6,7 @@ import PlacesContext, { Place } from "../../PlacesContext";
 
 /** Sidebar for map app */
 const SideBar = () => {
-    const { places, removePlace } = useContext(PlacesContext);
+    const { places, removePlace, activePlace, setActivePlace } = useContext(PlacesContext);
     const [hideSidebar, setHideSidebar] = useState(false);
 
     const additionalSidebarClasses: String[] = [];
@@ -16,8 +16,20 @@ const SideBar = () => {
     const PlaceRow = ({ index, style }) => {
         const place = places?.[index];
 
+        const placeClasses: String[] = [];
+
+        if (activePlace === place?.id) placeClasses.push("opacity-50");
+
         return (
-            <div style={style} className="flex flex-row h-20 justify-between items-center p-2 border-b-2 border-b-slate-300 text-slate-900">
+            <div
+                style={style}
+                className={`transition-opacity delay-100 flex flex-row h-20 justify-between items-center p-2 border-b-2 border-b-slate-300 text-slate-900 ${placeClasses?.join(" ")}`}
+                onMouseEnter={() => {
+                    if (setActivePlace) setActivePlace(place?.id)
+                }}
+                onMouseLeave={() => {
+                    if (setActivePlace) setActivePlace();
+                }}>
                 <div className="flex flex-col items-start dark:text-white group w-full overflow-hidden">
                     <h2 className="w-full font-bold text-sky-600 text-nowrap text-ellipsis overflow-hidden">{place?.name}</h2>
                     <span className="text-nowrap text-ellipsis w-full overflow-hidden">{place?.address}</span>

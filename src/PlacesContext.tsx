@@ -15,7 +15,7 @@ export interface PlacesContextType {
     places?: Place[],
     addPlace?: Function,
     removePlace?: Function,
-    activePlace?: Place,
+    activePlace?: string,
     setActivePlace?: Function,
     hoveredPlace?: Place,
     setHoveredPlace?: Function,

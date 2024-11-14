@@ -5,7 +5,8 @@ interface MemoMarkerProps {
     placeId: string,
     lat: number,
     lng: number,
-    refFunc: Function
+    refFunc: Function,
+    setActivePlace?: Function,
 }
 
 /** Memoized Marker component to prevent re-rendering
@@ -13,10 +14,22 @@ interface MemoMarkerProps {
  * @param {Number} lat - Latitude coordinate
  * @param {Number} lng - Longitude coordinate
  * @param {Function} refFunc - Function to set marker ref
+ * @param {Function} setActivePlace - Sets active location
+
  */
-const MemoMarker = memo(({ placeId, lat, lng, refFunc }: MemoMarkerProps) => (
-    <AdvancedMarker key={placeId} position={{ lat, lng }} animation={2} ref={refFunc}>
-        <span className="material-symbols-outlined location text-4xl text-red-500 drop-shadow">
+const MemoMarker = memo(({ placeId, lat, lng, refFunc, setActivePlace }: MemoMarkerProps) => (
+    <AdvancedMarker
+        key={placeId}
+        position={{ lat, lng }}
+        animation={2}
+        ref={refFunc}
+        onMouseEnter={() => {
+            if (setActivePlace) setActivePlace(placeId);
+        }}
+        onMouseLeave={() => {
+            if (setActivePlace) setActivePlace();
+        }}>
+        <span className={`material-symbols-outlined location text-4xl text-red-500 drop-shadow transition-all`}>
             location_on
         </span>
     </AdvancedMarker>

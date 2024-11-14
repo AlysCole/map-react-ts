@@ -16,7 +16,7 @@ interface InfoWindow {
 const MapView = () => {
     const [clickedLocation, setClickedLocation] = useState<MapMouseEvent|undefined|null>();
     const [infoWindow, setInfoWindow] = useState<InfoWindow>();
-    const { places, addPlace, markers, setMarkers } = useContext(PlacesContext);
+    const { places, addPlace, markers, setMarkers, activePlace, setActivePlace } = useContext(PlacesContext);
 
     const map = useMap();
     const geocodeLib = useMapsLibrary("geocoding");
@@ -167,7 +167,7 @@ const MapView = () => {
                 setClickedLocation(event);
             }}>
             {places?.map((place: Place) => (
-                <MemoMarker placeId={place.id} lat={place?.coordinates?.lat || 0} lng={place?.coordinates?.lng || 0} refFunc={(marker: Marker) => setMarkerRef(marker, place.id)} />
+                <MemoMarker placeId={place.id} lat={place?.coordinates?.lat || 0} lng={place?.coordinates?.lng || 0} activePlace={activePlace} refFunc={(marker: Marker) => setMarkerRef(marker, place.id)} setActivePlace={setActivePlace} />
             ))}
             {!!infoWindow && (
                 <InfoWindow position={clickedLocation?.detail?.latLng} headerContent={infoWindow?.header} onCloseClick={() => {

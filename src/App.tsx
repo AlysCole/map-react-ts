@@ -21,7 +21,7 @@ function App() {
     // Manage the state of places at the parent-level
     const [places, setPlaces] = useState<Place[]>();
     const [hoveredPlace, setHoveredPlace] = useState<Place|undefined>();
-    const [activePlace, setActivePlace] = useState<Place|undefined>();
+    const [activePlace, setActivePlace] = useState<string|undefined>();
     const [markers, setMarkers] = useState<{[key: string]: Marker}>({});
 
     /** Adds a place to the state
