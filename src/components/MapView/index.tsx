@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useContext } from 'react';
-import { Map, InfoWindow, Marker, useMapsLibrary, useMap, MapMouseEvent } from '@vis.gl/react-google-maps';
+import { Map, InfoWindow, AdvancedMarker, useMapsLibrary, useMap, MapMouseEvent } from '@vis.gl/react-google-maps';
 import PlacesContext, { Place } from '../../PlacesContext';
 
 import { getUserLocation } from '../../utils/map';
@@ -28,15 +28,19 @@ const MapView = () => {
     // On mount, request for the user's location
     useEffect((): void => {
         if (navigator?.geolocation) {
-            getUserLocation(map, setCurrLocation, () => {
+            const setMapLocation = (pos: google.maps.LatLngLiteral) => {
+                if (map) map.setCenter(pos);
+            }
+
+            getUserLocation(map, setMapLocation, () => {
                 // If an error occurs, default to the city of Amsterdam
-                setCurrLocation({
+                setMapLocation({
                     lat: 52.36847450105606,
                     lng: 4.897435129632838
                 })
             }); 
         }
-    }, []);
+    }, [map]);
 
     // Handle for Geocoder library import
     useEffect((): void => {
@@ -120,14 +124,22 @@ const MapView = () => {
     }, [clickedLocation]);
 
     return (
-        <Map defaultZoom={10} center={currLocation} onClick={(event: MapMouseEvent) => {
-            console.log("Clicked location:", event);
-            // Otherwise, show a custom info window with the formatted address and
-            // coordinates
-            setClickedLocation(event);
-        }}>
+        <Map
+            mapId="e9553ff684d37422"
+            defaultZoom={10}
+            defaultCenter={currLocation}
+            onClick={(event: MapMouseEvent) => {
+                console.log("Clicked location:", event);
+                // Otherwise, show a custom info window with the formatted address and
+                // coordinates
+                setClickedLocation(event);
+            }}>
             {places?.map((place: Place) => (
-                <Marker position={place?.coordinates} />
+                <AdvancedMarker key={place?.id} position={place?.coordinates} animation={2}>
+                    <span className="material-symbols-outlined location text-4xl text-red-500 drop-shadow">
+                        location_on
+                    </span>
+                </AdvancedMarker>
             ))}
             {!!infoWindow && (
                 <InfoWindow position={clickedLocation?.detail?.latLng} headerContent={infoWindow?.header} onCloseClick={() => {

@@ -19,7 +19,7 @@ const SideBar = () => {
         return (
             <div style={style} className="flex flex-row h-20 justify-between items-center p-2 border-b-2 border-b-slate-300 text-slate-900">
                 <div className="flex flex-col items-start dark:text-white group w-full overflow-hidden">
-                    <h2 className="w-full font-bold text-slate-600 text-nowrap text-ellipsis overflow-hidden">{place?.name}</h2>
+                    <h2 className="w-full font-bold text-sky-600 text-nowrap text-ellipsis overflow-hidden">{place?.name}</h2>
                     <span className="text-nowrap text-ellipsis w-full overflow-hidden">{place?.address}</span>
                     {!!place?.coordinates && <span className="text-xs w-full overflow-hidden text-slate-400 text-nowrap text-ellipsis">{place?.coordinates?.lat}, {place?.coordinates?.lng}</span>}
                 </div>
