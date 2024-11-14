@@ -2,9 +2,7 @@ import { useEffect, useRef, useState, useContext } from 'react';
 import { Map, InfoWindow, Marker, useMapsLibrary, useMap, MapMouseEvent } from '@vis.gl/react-google-maps';
 import PlacesContext, { Place } from '../../PlacesContext';
 
-interface GeocodeResponse {
-    results: Array<{formatted_address: string, place_id: string}>
-}
+import { getUserLocation } from '../../utils/map';
 
 interface InfoWindow {
     header?: string,
@@ -27,27 +25,16 @@ const MapView = () => {
     const placesLib = useMapsLibrary("places");
     const placesRef = useRef<google.maps.places.PlacesService>();
 
-    /**
-     * Request for user's current position
-     */
-    const getUserLocation = (): void => {
-        navigator.geolocation.getCurrentPosition((position) => {
-            const pos = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude
-            };
-            setCurrLocation(pos);
-
-            if (map) map.setCenter(pos);
-        }, (error) => {
-            console.error("[getCurrentPosition] An error occurred while trying to request for the user's current position:", error);
-        });
-    }
-
     // On mount, request for the user's location
     useEffect((): void => {
         if (navigator?.geolocation) {
-            getUserLocation(); 
+            getUserLocation(map, setCurrLocation, () => {
+                // If an error occurs, default to the city of Amsterdam
+                setCurrLocation({
+                    lat: 52.36847450105606,
+                    lng: 4.897435129632838
+                })
+            }); 
         }
     }, []);
 
@@ -69,19 +56,21 @@ const MapView = () => {
             // Reverse geocode the clicked coordinates
             geocoder.current
                 ?.geocode({ location: clickedLocation?.detail?.latLng })
-                ?.then((res: GeocodeResponse) => {
+                ?.then((res: google.maps.GeocoderResponse) => {
                     if (res?.results?.[0]) {
                         console.log("Clicked location:", clickedLocation);
-
+                        console.log("Geocode response:", res?.results?.[0]);
                         const coordinates = clickedLocation?.detail?.latLng;
                         const address = res?.results?.[0]?.formatted_address;
                         const id = res?.results?.[0]?.place_id;
-            
-                        // If a Place ID does not exist for clicked coordinates, show a custom info window
+
+                        // If a Place ID does not exist for clicked coordinates, show
+                        // a custom info window
                         if (!clickedLocation?.detail?.placeId) {
-                            // Display an info window with details on the selected coordinates
+                            // Display an info window with details on the selected
+                            // coordinates
                             setInfoWindow({
-                                header: res?.results?.[0]?.formatted_address,
+                                header: address,
                                 content: `${coordinates?.lat}, ${coordinates?.lng}`,
                             });
                         }
@@ -89,7 +78,8 @@ const MapView = () => {
                         // Check if place already exists, and if so, don't duplicate the place
                         if (places && places.findIndex((place) => place?.id === id) > -1) return;
 
-                        // Get the name of the place by placeid, if a place ID exists
+                        // Call places API to fetch the place name, if a place ID exists in the
+                        // mouse event (otherwise, there was no place name)
                         if (!!clickedLocation?.detail?.placeId) {
                             placesRef.current?.getDetails({
                                 placeId: clickedLocation?.detail?.placeId,
@@ -130,9 +120,10 @@ const MapView = () => {
     }, [clickedLocation]);
 
     return (
-        <Map defaultZoom={5} defaultCenter={currLocation} onClick={(event: MapMouseEvent) => {
+        <Map defaultZoom={10} center={currLocation} onClick={(event: MapMouseEvent) => {
             console.log("Clicked location:", event);
-            // Otherwise, show a custom info window with the formatted address and coordinates
+            // Otherwise, show a custom info window with the formatted address and
+            // coordinates
             setClickedLocation(event);
         }}>
             {places?.map((place: Place) => (
