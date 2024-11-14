@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useContext } from 'react';
-import { Map, InfoWindow, AdvancedMarker, useMapsLibrary, useMap, MapMouseEvent } from '@vis.gl/react-google-maps';
+import { Map, InfoWindow, useMapsLibrary, useMap, MapMouseEvent } from '@vis.gl/react-google-maps';
 import {MarkerClusterer} from "@googlemaps/markerclusterer";
 import type {Marker} from "@googlemaps/markerclusterer";
 
@@ -16,8 +16,7 @@ interface InfoWindow {
 const MapView = () => {
     const [clickedLocation, setClickedLocation] = useState<MapMouseEvent|undefined|null>();
     const [infoWindow, setInfoWindow] = useState<InfoWindow>();
-    const { places, addPlace } = useContext(PlacesContext);
-    const [markers, setMarkers] = useState<{[key: string]: Marker}>({});
+    const { places, addPlace, markers, setMarkers } = useContext(PlacesContext);
 
     const map = useMap();
     const geocodeLib = useMapsLibrary("geocoding");
@@ -32,10 +31,10 @@ const MapView = () => {
      * @param {string} key - Unique marker key (in this case, a place ID)
      */
     const setMarkerRef = (marker: Marker | null, key: string) => {
-        if (marker && markers[key]) return;
-        if (!marker && !markers[key]) return;
+        if (marker && markers?.[key]) return;
+        if (!marker && !markers?.[key]) return;
 
-        setMarkers(prev => {
+        if (setMarkers) setMarkers((prev: Marker[]) => {
           if (marker) {
             return {...prev, [key]: marker};
           } else {
@@ -73,7 +72,7 @@ const MapView = () => {
     // Clear and re-update clusterer markers when marker list changes
     useEffect(() => {
         clusterer.current?.clearMarkers();
-        clusterer.current?.addMarkers(Object.values(markers));
+        if (markers) clusterer.current?.addMarkers(Object.values(markers));
     }, [markers]);
 
     // Handle for Geocoder library import

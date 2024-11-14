@@ -1,9 +1,11 @@
 import { createContext } from 'react'
 
+import { Marker } from '@googlemaps/markerclusterer';
+
 export interface Place {
-    id: String,
-    name?: String,
-    address?: String,
+    id: string,
+    name?: string,
+    address?: string,
     coordinates?: google.maps.LatLngLiteral
 }
 
@@ -16,7 +18,9 @@ export interface PlacesContextType {
     activePlace?: Place,
     setActivePlace?: Function,
     hoveredPlace?: Place,
-    setHoveredPlace?: Function
+    setHoveredPlace?: Function,
+    markers?: {[key: string]: Marker},
+    setMarkers?: Function,
 }
 
 const PlacesContext = createContext<PlacesContextType>({

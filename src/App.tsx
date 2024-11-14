@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { APIProvider } from '@vis.gl/react-google-maps';
+import type {Marker} from "@googlemaps/markerclusterer";
+
 import MapView from './components/MapView';
 import SideBar from './components/Sidebar';
 
@@ -20,6 +22,7 @@ function App() {
     const [places, setPlaces] = useState<Place[]>();
     const [hoveredPlace, setHoveredPlace] = useState<Place|undefined>();
     const [activePlace, setActivePlace] = useState<Place|undefined>();
+    const [markers, setMarkers] = useState<{[key: string]: Marker}>({});
 
     /** Adds a place to the state
      * @param {Place} place - Place object
@@ -47,6 +50,15 @@ function App() {
 
             return newState;
         });
+
+        // Remove marker from markers state by ID
+        if (markers?.[place.id]) {
+            setMarkers((prev) => {
+                const newMarkers = {...prev};
+                delete newMarkers[place.id];
+                return newMarkers;
+            }) ;
+        }
     }
 
     return (
@@ -65,6 +77,8 @@ function App() {
                     hoveredPlace,
                     setActivePlace,
                     setHoveredPlace,
+                    markers,
+                    setMarkers
                 }}>
                     <SideBar />
                     <MapView />
