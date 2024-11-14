@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState, useContext } from 'react';
 import { Map, InfoWindow, AdvancedMarker, useMapsLibrary, useMap, MapMouseEvent } from '@vis.gl/react-google-maps';
+import {MarkerClusterer} from "@googlemaps/markerclusterer";
+import type {Marker} from "@googlemaps/markerclusterer";
+
 import PlacesContext, { Place } from '../../PlacesContext';
+import MemoMarker from '../MemoMarker';
 
 import { getUserLocation } from '../../utils/map';
 
@@ -10,13 +14,10 @@ interface InfoWindow {
 }
 
 const MapView = () => {
-    const [currLocation, setCurrLocation] = useState<google.maps.LatLngLiteral|undefined>({
-        lat: 0.00,
-        lng: 0.00,
-    });
     const [clickedLocation, setClickedLocation] = useState<MapMouseEvent|undefined|null>();
     const [infoWindow, setInfoWindow] = useState<InfoWindow>();
     const { places, addPlace } = useContext(PlacesContext);
+    const [markers, setMarkers] = useState<{[key: string]: Marker}>({});
 
     const map = useMap();
     const geocodeLib = useMapsLibrary("geocoding");
@@ -24,9 +25,31 @@ const MapView = () => {
 
     const placesLib = useMapsLibrary("places");
     const placesRef = useRef<google.maps.places.PlacesService>();
+    const clusterer = useRef<MarkerClusterer | null>(null);
 
-    // On mount, request for the user's location
+    /** Adds/deletes marker from markers state
+     * @param {Marker} marker - marker ref
+     * @param {string} key - Unique marker key (in this case, a place ID)
+     */
+    const setMarkerRef = (marker: Marker | null, key: string) => {
+        if (marker && markers[key]) return;
+        if (!marker && !markers[key]) return;
+
+        setMarkers(prev => {
+          if (marker) {
+            return {...prev, [key]: marker};
+          } else {
+            const newMarkers = {...prev};
+            delete newMarkers[key];
+            return newMarkers;
+          }
+        });
+    };
+
     useEffect((): void => {
+        if (!map) return;
+
+        // When the map is loaded, request for the user's location
         if (navigator?.geolocation) {
             const setMapLocation = (pos: google.maps.LatLngLiteral) => {
                 if (map) map.setCenter(pos);
@@ -40,7 +63,18 @@ const MapView = () => {
                 })
             }); 
         }
+
+        // Initialize clusterer
+        if (!clusterer.current) {
+            clusterer.current = new MarkerClusterer({ map });
+        }
     }, [map]);
+
+    // Clear and re-update clusterer markers when marker list changes
+    useEffect(() => {
+        clusterer.current?.clearMarkers();
+        clusterer.current?.addMarkers(Object.values(markers));
+    }, [markers]);
 
     // Handle for Geocoder library import
     useEffect((): void => {
@@ -127,7 +161,10 @@ const MapView = () => {
         <Map
             mapId="e9553ff684d37422"
             defaultZoom={10}
-            defaultCenter={currLocation}
+            defaultCenter={{
+                lat: 0.00,
+                lng: 0.00,
+            }}
             onClick={(event: MapMouseEvent) => {
                 console.log("Clicked location:", event);
                 // Otherwise, show a custom info window with the formatted address and
@@ -135,11 +172,7 @@ const MapView = () => {
                 setClickedLocation(event);
             }}>
             {places?.map((place: Place) => (
-                <AdvancedMarker key={place?.id} position={place?.coordinates} animation={2}>
-                    <span className="material-symbols-outlined location text-4xl text-red-500 drop-shadow">
-                        location_on
-                    </span>
-                </AdvancedMarker>
+                <MemoMarker placeId={place.id} lat={place?.coordinates?.lat || 0} lng={place?.coordinates?.lng || 0} refFunc={(marker: Marker) => setMarkerRef(marker, place.id)} />
             ))}
             {!!infoWindow && (
                 <InfoWindow position={clickedLocation?.detail?.latLng} headerContent={infoWindow?.header} onCloseClick={() => {
