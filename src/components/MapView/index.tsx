@@ -95,8 +95,6 @@ const MapView = () => {
                 ?.geocode({ location: clickedLocation?.detail?.latLng })
                 ?.then((res: google.maps.GeocoderResponse) => {
                     if (res?.results?.[0]) {
-                        console.log("Clicked location:", clickedLocation);
-                        console.log("Geocode response:", res?.results?.[0]);
                         const coordinates = clickedLocation?.detail?.latLng;
                         const address = res?.results?.[0]?.formatted_address;
                         const id = res?.results?.[0]?.place_id;
@@ -127,7 +125,6 @@ const MapView = () => {
                                     place &&
                                     place?.name
                                 ) {
-                                    console.log("Place details:", place);
                                     // Add the place with a name, if a name is returned
                                     if (addPlace) {
                                         addPlace({
@@ -165,7 +162,6 @@ const MapView = () => {
                 lng: 0.00,
             }}
             onClick={(event: MapMouseEvent) => {
-                console.log("Clicked location:", event);
                 // Otherwise, show a custom info window with the formatted address and
                 // coordinates
                 setClickedLocation(event);
